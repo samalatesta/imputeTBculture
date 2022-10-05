@@ -12,4 +12,4 @@ This program contains code to generate descriptive summary tables included as re
 This program contains code to implement available case analysis, last observation carried forward, and multiple imputation. 
 
 ### smear_example.R
-This program contains code for the 
+This program contains code for the illustrative example conducted in the paper estimating the association between smear status and time to culture conversion. 
