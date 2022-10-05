@@ -1,8 +1,9 @@
 library(dplyr)
 library(data.table)
 library(kableExtra)
+library(arsenal)
 
-data <- read.csv("C:\\Users\\smala\\OneDrive\\Documents\\TRUST\\imputeTBculture\\data\\culture_complete.csv", stringsAsFactors = F)
+data <- read.csv("C:\\Users\\smala\\OneDrive\\Documents\\TRUST\\imputeTBculture\\data\\TCC_imputation_data.csv", stringsAsFactors = F)
 
 culture <- data %>% dplyr::select(pid, paste0("culture_conversion_sputum_specimen_", 1:12))
 
@@ -80,4 +81,45 @@ colnames(miss_group_table) <- c("Weeks 1-4", "Weeks 5-8", "Weeks 9-12", "Total N
 
 print(miss_group_table)  %>%  kable(caption = "Missing data patterns (C = no samples missing, I = at least 1 sample missing, M = all samples missing)") %>% kable_styling()
 write.csv(data.frame(miss_group_table), "C:\\Users\\smala\\OneDrive\\Documents\\TRUST\\imputeTBculture\\output/missing_patterns.csv", row.names = F)
+
+#summarize amount of missing data in independent variables
+ind_vars <- data %>% dplyr::select(pid, screen_years, screen_sex, bmi, bl_hiv, fstrom1_baseline, smoked_substance_use, cxr_cavity_chest_radiograph_1, problem_alcohol)
+#set up controls for table
+controls1 <- tableby.control(
+  #T or F to include pvals
+  test = T,
+  #T or F to include total column
+  total = F,
+  #statistics you want for continuous vars
+  numeric.stats = c("N"),
+  #Stats for categorical
+  cat.stats = c("N"),
+  stats.labels = list(
+    medianq1q3 = "Median (Q1, Q3)",
+    Nmiss = "Missing"
+  ),
+  #cateogrical test
+  cat.test = "chisq",
+  #numeric test
+  numeric.test = "anova",
+  digits = 0L
+)
+
+table_one <- tableby(#including var to left of ~ will stratify table
+  ~ screen_sex + 
+    screen_years + 
+    bmi +
+    bl_hiv +
+    problem_alcohol +
+    fstrom1_baseline +
+    cxr_cavity_chest_radiograph_1 +
+    smoked_substance_use 
+  ,
+  data = ind_vars, 
+  control = controls1)  %>%  set_labels(c( screen_sex = "Assigned gender", screen_years = "Age category", bmi = "BMI",   bl_hiv = "HIV Status",  problem_alcohol ="Problem Alcohol Use",  fstrom1_baseline = "Tobacco Use", cxr_cavity_chest_radiograph_1 = "Cavitation",   smoked_substance_use = "Smoked substance use", unemployment_baseline = "Employment Status", cannabis_use = "Cannabis use", meth_use = "Methamphetamine use", mandrax_use = "Methaqualone use", cesd_bin_baseline = "Depression Risk", household_hunger_bin_baseline = "Household hunger", s_concafb_sputum_specimen_1 = "Smear, concentrated", smear_pos_TRUST_or_TB = "Smear Status", screen_race = "Self-reported race"))
+
+#output table
+ind_var_miss <- data.frame(summary(table_one, title = ""))
+
+
 
